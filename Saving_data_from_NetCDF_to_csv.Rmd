@@ -5,6 +5,58 @@ date: "2024-08-27"
 output: word_document
 ---
 
+Installing or loading packages
 ```{r}
+#install.packages('RNetCDF')
+#install.packages('writexl')
+library(RNetCDF)
+library(writexl)
+```
 
+Opening the NetCDF file
+```{r}
+data <- open.nc("C:\\Users\\uqegirol\\Desktop\\Secondment\\Accelnet project\\NetCDF_files\\Ridgefield_L6_20160101_20240202.nc", header=TRUE, fill = TRUE) #  imports the file with the data
+print.nc(data)
+```
+Accessing variable attributes
+```{r}
+att.get.nc(data, "Precip", "units")
+```
+Accessing global attributes
+```{r}
+att.get.nc(data, "NC_GLOBAL", "altitude")
+```
+
+Getting data out of the file
+```{r}
+time <- var.get.nc(data, "time")
+precipitation <- var.get.nc(data, "Precip")
+soil_water_content <- var.get.nc(data, "Sws")
+soil_temperature <- var.get.nc(data, "Ts")
+air_temperature <- var.get.nc (data, "Ta")
+```
+
+Converting dates
+```{r}
+library(lubridate)
+origin_date <- as.Date("1800-01-01") # Define the origin date
+days_since_1800 <- df$Time
+whole_days <- floor(days_since_1800) # Extract the whole number of days
+fractional_day <- days_since_1800 - whole_days # Extract the fractional part of days
+date_converted <- origin_date + days(whole_days) # Convert the whole number of days to a Date object
+
+fractional_seconds <- fractional_day * 86400 # multiplies the fractional day for the number of seconds in a day. Returns the number of seconds
+
+posix_converted <- as.POSIXct(date_converted) + fractional_seconds # Create a POSIXct object with the date and fractional seconds
+
+tz <- att.get.nc(data, "NC_GLOBAL", "time_zone") # extract the time zone
+datetime_converted_tz <- as.POSIXct(posix_converted, tz = tz) # Specify the time zone when creating the POSIXct object
+```
+
+Saving to a dataframe
+```{r}
+df <- data.frame(Time_days_since_18000101 = time, Time = datetime_converted_tz, Precipitation = precipitation, Soil_water_content = soil_water_content, Soil_temperature = soil_temperature, Air_temperature = air_temperature)
+#plot(df$Air_temperature, df$Soil_temperature)
+#plot(df$Precipitation, df$Soil_water_content)
+plot(df$Time, df$Air_temperature)
 ```
