@@ -1,0 +1,10 @@
+---
+title: "Saving_data_from_NetCDF_to_csv"
+author: "Elisa"
+date: "2024-08-27"
+output: word_document
+---
+
+```{r}
+
+```
