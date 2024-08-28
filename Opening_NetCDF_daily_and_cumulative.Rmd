@@ -1,7 +1,7 @@
 ---
-title: "Saving_data_from_NetCDF_to_csv"
+title: "Opening_NetCDF_daily_and_cumulative"
 author: "Elisa"
-date: "2024-08-27"
+date: "2024-08-28"
 output: word_document
 ---
 
@@ -9,27 +9,12 @@ Installing or loading packages
 ```{r}
 rm(list=ls()) # cleans the workspace
 #install.packages('RNetCDF')
-#install.packages('writexl')
 library(RNetCDF)
-library(writexl)
 ```
 
-Opening the NetCDF file
+#Daily NetCDF file
 ```{r}
-data <- open.nc("C:\\Users\\uqegirol\\Desktop\\Secondment\\Accelnet project\\NetCDF_files\\Ridgefield_L6_20160101_20240202.nc", header=TRUE, fill = TRUE) #  imports the file with the data
-#print.nc(data)
-```
-Accessing variable attributes
-```{r}
-#att.get.nc(data, "Precip", "units")
-```
-Accessing global attributes
-```{r}
-#att.get.nc(data, "NC_GLOBAL", "altitude")
-```
-
-Getting data out of the file
-```{r}
+data <- open.nc("C:\\Users\\uqegirol\\Desktop\\Secondment\\Accelnet project\\NetCDF_files\\Ridgefield_L6_20160101_20240202_Daily.nc", header=TRUE, fill = TRUE) #  imports the file with the data
 time <- var.get.nc(data, "time")
 precipitation <- var.get.nc(data, "Precip")
 soil_water_content <- var.get.nc(data, "Sws")
@@ -37,7 +22,7 @@ soil_temperature <- var.get.nc(data, "Ts")
 air_temperature <- var.get.nc (data, "Ta")
 ```
 
-Converting dates
+##Converting the date
 ```{r}
 library(lubridate)
 origin_date <- as.Date("1800-01-01") # Define the origin date
@@ -45,36 +30,139 @@ days_since_1800 <- time
 whole_days <- floor(days_since_1800) # Extract the whole number of days
 fractional_day <- days_since_1800 - whole_days # Extract the fractional part of days
 date_converted <- origin_date + days(whole_days) # Convert the whole number of days to a Date object
-
 fractional_seconds <- fractional_day * 86400 # multiplies the fractional day for the number of seconds in a day. Returns the number of seconds
-
-posix_converted <- as.POSIXct(date_converted) + fractional_seconds # Create a POSIXct object with the date and fractional seconds
-
+posix_convertedD <- as.POSIXct(date_converted) + fractional_seconds # Create a POSIXct object with the date and fractional seconds
 Tz <- att.get.nc(data, "NC_GLOBAL", "time_zone") # extract the time zone
-datetime_converted_tz <- as.POSIXct(posix_converted, tz = Tz) # Specify the time zone when creating the POSIXct object. To create a csv file this is commented out because we cannot retain the time zone information in a csv
-
-# Organizing time zone information to be preserved in the csv file
-## Saving time zone to a separate column
+datetime_converted_tz <- as.POSIXct(posix_convertedD, tz = Tz) # Specify the time zone when creating the POSIXct object. To create a csv file this is commented out because we cannot retain the time zone information in a csv
 library(dplyr)
-time_zone <- rep(Tz, length(posix_converted))
+time_zone <- rep(Tz, length(posix_convertedD))
 ```
 
-Saving to a dataframe
+##Saving to a dataframe
 ```{r}
-df <- data.frame(Time = datetime_converted_tz, Time_zone = time_zone, Precipitation = precipitation, Soil_water_content = soil_water_content, Soil_temperature = soil_temperature, Air_temperature = air_temperature)
+dfD <- data.frame(Time = datetime_converted_tz, Time_zone = time_zone, Precipitation = precipitation, Soil_water_content = soil_water_content, Soil_temperature = soil_temperature, Air_temperature = air_temperature)
 
 # Convert POSIXct to character
-df$Time <- format(df$Time, format = "%Y-%m-%d %H:%M:%S")
+dfD$Time <- format(dfD$Time, format = "%Y-%m-%d %H:%M:%S")
 ```
 
-Same example plots to check the data
+##Same example plots to check the data
 ```{r}
-#plot(df$Air_temperature, df$Soil_temperature)
-#plot(df$Precipitation, df$Soil_water_content)
-#plot(df$Time, df$Air_temperature)
+plot(posix_convertedD, dfD$Air_temperature)
+plot(posix_convertedD, dfD$Precipitation)
 ```
 
-Saving to a csv file
+#Monthly NetCDF file
 ```{r}
-write_xlsx(df, "C:\\Users\\uqegirol\\Desktop\\Secondment\\Accelnet project\\NetCDF_files\\Ridgefield_L6_20160101_20240202.csv")
+data <- open.nc("C:\\Users\\uqegirol\\Desktop\\Secondment\\Accelnet project\\NetCDF_files\\Ridgefield_L6_20160101_20240202_Monthly.nc", header=TRUE, fill = TRUE) #  imports the file with the data
+time <- var.get.nc(data, "time")
+precipitation <- var.get.nc(data, "Precip")
+soil_water_content <- var.get.nc(data, "Sws")
+soil_temperature <- var.get.nc(data, "Ts")
+air_temperature <- var.get.nc (data, "Ta")
+```
+
+##Converting the date
+```{r}
+library(lubridate)
+origin_date <- as.Date("1800-01-01") # Define the origin date
+days_since_1800 <- time
+whole_days <- floor(days_since_1800) # Extract the whole number of days
+fractional_day <- days_since_1800 - whole_days # Extract the fractional part of days
+date_converted <- origin_date + days(whole_days) # Convert the whole number of days to a Date object
+fractional_seconds <- fractional_day * 86400 # multiplies the fractional day for the number of seconds in a day. Returns the number of seconds
+posix_convertedM <- as.POSIXct(date_converted) + fractional_seconds # Create a POSIXct object with the date and fractional seconds
+Tz <- att.get.nc(data, "NC_GLOBAL", "time_zone") # extract the time zone
+datetime_converted_tz <- as.POSIXct(posix_convertedM, tz = Tz) # Specify the time zone when creating the POSIXct object. To create a csv file this is commented out because we cannot retain the time zone information in a csv
+library(dplyr)
+time_zone <- rep(Tz, length(posix_convertedM))
+```
+
+##Saving to a dataframe
+```{r}
+dfM <- data.frame(Time = datetime_converted_tz, Time_zone = time_zone, Precipitation = precipitation, Soil_water_content = soil_water_content, Soil_temperature = soil_temperature, Air_temperature = air_temperature)
+
+# Convert POSIXct to character
+dfM$Time <- format(dfM$Time, format = "%Y-%m-%d %H:%M:%S")
+```
+
+##Same example plots to check the data
+```{r}
+plot(posix_convertedM, dfM$Air_temperature)
+plot(posix_convertedM, dfM$Precipitation)
+```
+
+#Annual NetCDF file
+```{r}
+data <- open.nc("C:\\Users\\uqegirol\\Desktop\\Secondment\\Accelnet project\\NetCDF_files\\Ridgefield_L6_20160101_20240202_Annual.nc", header=TRUE, fill = TRUE) #  imports the file with the data
+time <- var.get.nc(data, "time")
+precipitation <- var.get.nc(data, "Precip")
+soil_water_content <- var.get.nc(data, "Sws")
+soil_temperature <- var.get.nc(data, "Ts")
+air_temperature <- var.get.nc (data, "Ta")
+```
+
+##Converting the date
+```{r}
+library(lubridate)
+origin_date <- as.Date("1800-01-01") # Define the origin date
+days_since_1800 <- time
+whole_days <- floor(days_since_1800) # Extract the whole number of days
+fractional_day <- days_since_1800 - whole_days # Extract the fractional part of days
+date_converted <- origin_date + days(whole_days) # Convert the whole number of days to a Date object
+fractional_seconds <- fractional_day * 86400 # multiplies the fractional day for the number of seconds in a day. Returns the number of seconds
+posix_convertedA <- as.POSIXct(date_converted) + fractional_seconds # Create a POSIXct object with the date and fractional seconds
+Tz <- att.get.nc(data, "NC_GLOBAL", "time_zone") # extract the time zone
+datetime_converted_tz <- as.POSIXct(posix_convertedA, tz = Tz) # Specify the time zone when creating the POSIXct object. To create a csv file this is commented out because we cannot retain the time zone information in a csv
+library(dplyr)
+time_zone <- rep(Tz, length(posix_convertedA))
+```
+
+##Saving to a dataframe
+```{r}
+dfA <- data.frame(Time = datetime_converted_tz, Time_zone = time_zone, Precipitation = precipitation, Soil_water_content = soil_water_content, Soil_temperature = soil_temperature, Air_temperature = air_temperature)
+
+# Convert POSIXct to character
+dfA$Time <- format(dfA$Time, format = "%Y-%m-%d %H:%M:%S")
+```
+
+##Same example plots to check the data
+```{r}
+plot(posix_convertedA, dfA$Air_temperature)
+plot(posix_convertedA, dfA$Precipitation)
+```
+#Cumulative NetCDF file
+```{r}
+data <- open.nc("C:\\Users\\uqegirol\\Desktop\\Secondment\\Accelnet project\\NetCDF_files\\Ridgefield_L6_20160101_20240202_Cumulative.nc", header=TRUE, fill = TRUE) #  imports the file with the data
+time <- var.get.nc(data, "time")
+precipitation <- var.get.nc(data, "Precip")
+```
+
+##Converting the date
+```{r}
+library(lubridate)
+origin_date <- as.Date("1800-01-01") # Define the origin date
+days_since_1800 <- time
+whole_days <- floor(days_since_1800) # Extract the whole number of days
+fractional_day <- days_since_1800 - whole_days # Extract the fractional part of days
+date_converted <- origin_date + days(whole_days) # Convert the whole number of days to a Date object
+fractional_seconds <- fractional_day * 86400 # multiplies the fractional day for the number of seconds in a day. Returns the number of seconds
+posix_convertedC <- as.POSIXct(date_converted) + fractional_seconds # Create a POSIXct object with the date and fractional seconds
+Tz <- att.get.nc(data, "NC_GLOBAL", "time_zone") # extract the time zone
+datetime_converted_tz <- as.POSIXct(posix_convertedC, tz = Tz) # Specify the time zone when creating the POSIXct object. To create a csv file this is commented out because we cannot retain the time zone information in a csv
+library(dplyr)
+time_zone <- rep(Tz, length(posix_convertedC))
+```
+
+##Saving to a dataframe
+```{r}
+dfC <- data.frame(Time = datetime_converted_tz, Time_zone = time_zone, Precipitation = precipitation)
+
+# Convert POSIXct to character
+dfC$Time <- format(dfC$Time, format = "%Y-%m-%d %H:%M:%S")
+```
+
+##Same example plots to check the data
+```{r}
+plot(posix_convertedC, dfC$Precipitation)
 ```
