@@ -71,7 +71,7 @@ Same example plots to check the data
 ```{r}
 #plot(df$Air_temperature, df$Soil_temperature)
 #plot(df$Precipitation, df$Soil_water_content)
-#plot(df$Time, df$Air_temperature)
+#plot(posix_converted, df$Air_temperature)
 ```
 
 Saving to a csv file
